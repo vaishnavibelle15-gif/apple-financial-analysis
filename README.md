@@ -1,4 +1,4 @@
-# 🍎 Apple Inc (AAPL) — Financial Intelligence & Strategic Analysis
+#  Apple Inc (AAPL) — Financial Intelligence & Strategic Analysis
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue?style=flat-square&logo=python)
 ![Data Source](https://img.shields.io/badge/Data-SEC%2010--K%20Filings-orange?style=flat-square)
@@ -10,7 +10,7 @@
 
 ---
 
-## 📊 Dashboard Preview
+##  Dashboard Preview
 
 ### Page 1 — Executive Financial Overview
 ![Executive Overview](assets/01_executive_overview.png)
@@ -26,7 +26,7 @@
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 apple-financial-analysis/
@@ -44,7 +44,7 @@ apple-financial-analysis/
 
 ---
 
-## 📈 Key Financial Data (from SEC 10-K filings)
+##  Key Financial Data (from SEC 10-K filings)
 
 ### Revenue Overview ($B)
 
@@ -75,9 +75,9 @@ apple-financial-analysis/
 
 ---
 
-## 🧠 Key Strategic Findings
+##  Key Strategic Findings
 
-### 🟢 Services Is Now Apple's Most Important Business
+###  Services Is Now Apple's Most Important Business
 
 ```
 Services Revenue Growth:
@@ -93,7 +93,7 @@ Services generates **75% gross margin** vs **37% for hardware products** — a 3
 
 ---
 
-### 🟡 Greater China — A Growing Strategic Risk
+###  Greater China — A Growing Strategic Risk
 
 ```
 Greater China Revenue:
@@ -108,7 +108,7 @@ Greater China has declined for **three consecutive years**, from a peak of $74.2
 
 ---
 
-### 🔵 The iPhone Dependency Is Slowly Reducing
+###  The iPhone Dependency Is Slowly Reducing
 
 ```
 iPhone as % of Total Revenue:
@@ -124,19 +124,19 @@ iPhone still dominates at **50% of revenue**, but Services' rapid growth is stea
 
 ---
 
-### 🔴 Wearables Plateau — A Category Under Pressure
+###  Wearables Plateau — A Category Under Pressure
 
 The Wearables, Home & Accessories category peaked at **$41.2B in FY2022** and has declined every year since, reaching $35.7B in FY2025 — a **13% contraction** over three years. This signals market saturation for Apple Watch and AirPods, and a lack of breakthrough category expansion despite Vision Pro's launch.
 
 ---
 
-### 🟢 R&D Discipline: $31B Invested Annually
+###  R&D Discipline: $31B Invested Annually
 
 Apple invested **$31.4B in R&D in FY2025**, representing 7.5% of revenue — consistent with prior years. This restraint (vs peers like Alphabet at ~15%) reflects Apple's model of concentrated innovation over wide research bets. The pipeline includes Apple Intelligence (AI), Vision Pro, automotive tech, and health monitoring.
 
 ---
 
-### 🟢 Americas Dominance Remains Rock-Solid
+### Americas Dominance Remains Rock-Solid
 
 ```
 Americas Revenue:
@@ -148,20 +148,20 @@ Americas continues to generate the largest regional revenues, growing from $124.
 
 ---
 
-## 📌 Consulting-Level Recommendations
+##  Consulting-Level Recommendations
 
 | # | Priority | Recommendation |
 |---|---|---|
-| 1 | 🟢 **Accelerate** | Double down on Services expansion — App Store, Apple Intelligence, Apple Pay, Health |
-| 2 | 🟡 **Monitor** | China revenue decline needs strategic response: local partnerships or product localization |
-| 3 | 🔴 **Innovate** | Wearables need a new category breakthrough; Apple Watch market is saturating |
-| 4 | 🟢 **Leverage** | Services margin gap (75% vs 37%) justifies aggressive bundle pricing (Apple One) |
-| 5 | 🔵 **Diversify** | India expansion is critical to offset China risk — growing 30%+ annually |
-| 6 | 🟡 **Watch** | Mac declined sharply in FY2023 (–27% YoY) — Apple Silicon cycle must sustain upgrades |
+| 1 | **Accelerate** | Double down on Services expansion — App Store, Apple Intelligence, Apple Pay, Health |
+| 2 |  **Monitor** | China revenue decline needs strategic response: local partnerships or product localization |
+| 3 |  **Innovate** | Wearables need a new category breakthrough; Apple Watch market is saturating |
+| 4 |  **Leverage** | Services margin gap (75% vs 37%) justifies aggressive bundle pricing (Apple One) |
+| 5 |  **Diversify** | India expansion is critical to offset China risk — growing 30%+ annually |
+| 6 | **Watch** | Mac declined sharply in FY2023 (–27% YoY) — Apple Silicon cycle must sustain upgrades |
 
 ---
 
-## ⚙️ How to Run
+##  How to Run
 
 ### 1. Clone the repo
 ```bash
@@ -185,7 +185,7 @@ All 4 charts will be saved to `/assets/` automatically.
 
 ---
 
-## 📚 Data Sources
+##  Data Sources
 
 All data sourced from Apple's official publications:
 
@@ -202,7 +202,7 @@ All data sourced from Apple's official publications:
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 | Tool | Purpose |
 |---|---|
@@ -214,7 +214,7 @@ Deliberately minimal — **no pandas, no external data files** — so the script
 
 ---
 
-## 📄 License
+##  License
 
 MIT License — free to use, adapt, and share with attribution.
 
