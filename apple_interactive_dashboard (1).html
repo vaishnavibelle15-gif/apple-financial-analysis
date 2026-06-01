@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apple Inc (AAPL) — Financial Intelligence Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg:       #0a0a0f;
+    --bg2:      #111118;
+    --bg3:      #1a1a24;
+    --border:   rgba(255,255,255,0.08);
+    --border2:  rgba(255,255,255,0.14);
+    --text:     #e8e8f0;
+    --muted:    #7a7a8e;
+    --blue:     #4f8ef7;
+    --green:    #2dd4a0;
+    --red:      #f05d5d;
+    --amber:    #f4c542;
+    --purple:   #b07ef7;
+    --teal:     #3de8c8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #e8e8f0 0%, #a0a0b0 100%);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .brand { font-size: 17px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+  .brand span { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 8px; }
+  .header-badge {
+    background: rgba(79,142,247,0.12);
+    border: 1px solid rgba(79,142,247,0.3);
+    color: var(--blue);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── Tab Bar ── */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    padding: 0 32px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+  /* ── Content ── */
+  .content { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+  .page { display: none; animation: fadein 0.2s ease; }
+  .page.active { display: block; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* ── KPI Grid ── */
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .kpi {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    transition: border-color 0.2s;
+  }
+  .kpi:hover { border-color: var(--border2); }
+  .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 6px; }
+  .kpi-value { font-size: 24px; font-weight: 600; color: var(--text); font-family: 'JetBrains Mono', monospace; letter-spacing: -0.5px; }
+  .kpi-sub { font-size: 11px; margin-top: 4px; }
+  .up { color: var(--green); }
+  .dn { color: var(--red); }
+  .neu { color: var(--muted); }
+
+  /* ── Chart Grid ── */
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .chart-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+  .chart-card:hover { border-color: var(--border2); }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-card.third { grid-column: span 1; }
+  .ct { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .cs { font-size: 11px; color: var(--muted); margin-bottom: 14px; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 14px;
+    margin-bottom: 10px; font-size: 11px; color: var(--muted);
+  }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .ld { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+
+  /* ── Tooltip ── */
+  #tooltip {
+    position: fixed;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 12px;
+    pointer-events: none;
+    display: none;
+    z-index: 9999;
+    min-width: 180px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .tt-title { font-weight: 600; font-size: 13px; color: var(--text); margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .tt-row { display: flex; justify-content: space-between; gap: 20px; padding: 3px 0; color: var(--muted); font-size: 12px; }
+  .tt-val { font-weight: 600; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  /* ── Section labels ── */
+  .section-header { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 24px 0 14px; }
+
+  /* ── Data table ── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th { padding: 8px 12px; text-align: left; font-weight: 500; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 1px solid var(--border); }
+  .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .data-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .data-table td:first-child { font-family: 'Inter', sans-serif; color: var(--muted); }
+  .pos { color: var(--green) !important; }
+  .neg { color: var(--red) !important; }
+
+  /* ── Footer ── */
+  .footer { text-align: center; padding: 32px; color: var(--muted); font-size: 11px; border-top: 1px solid var(--border); margin-top: 40px; }
+  .footer a { color: var(--blue); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .content { padding: 16px; }
+    .charts { grid-template-columns: 1fr; }
+    .chart-card.full { grid-column: 1; }
+    .header { padding: 14px 16px; }
+    .tabs { padding: 0 16px; overflow-x: auto; }
+    .tab { padding: 10px 14px; white-space: nowrap; }
+    .kpi-value { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="tooltip"><div class="tt-title" id="tt-t"></div><div id="tt-b"></div></div>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo">🍎</div>
+    <div>
+      <div class="brand">Apple Inc (AAPL) <span>Financial Intelligence Dashboard</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">FY2020–FY2025 · Source: Official SEC 10-K Filings · Click any chart element for details</div>
+    </div>
+  </div>
+  <div class="header-badge">SEC 10-K DATA</div>
+</header>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" onclick="show('exec',this)">Executive Overview</button>
+  <button class="tab" onclick="show('prod',this)">Product Segments</button>
+  <button class="tab" onclick="show('reg',this)">Regional Analysis</button>
+  <button class="tab" onclick="show('margin',this)">Margins & Profitability</button>
+  <button class="tab" onclick="show('table',this)">Raw Data Table</button>
+</div>
+
+<div class="content">
+
+<!-- ══ PAGE 1: EXECUTIVE OVERVIEW ══ -->
+<div class="page active" id="page-exec">
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-label">FY2025 Revenue</div><div class="kpi-value">$416B</div><div class="kpi-sub up">↑ 6.4% vs FY2024</div></div>
+    <div class="kpi"><div class="kpi-label">Net Income</div><div class="kpi-value">$112B</div><div class="kpi-sub up">↑ 9.8% vs FY2024</div></div>
+    <div class="kpi"><div class="kpi-label">Gross Margin</div><div class="kpi-value">46.9%</div><div class="kpi-sub up">↑ 8.7pp since FY2020</div></div>
+    <div class="kpi"><div class="kpi-label">Operating Margin</div><div class="kpi-value">32.0%</div><div class="kpi-sub up">Best ever recorded</div></div>
+    <div class="kpi"><div class="kpi-label">Services Revenue</div><div class="kpi-value">$109B</div><div class="kpi-sub up">First $100B+ year</div></div>
+    <div class="kpi"><div class="kpi-label">5yr Rev CAGR</div><div class="kpi-value">8.7%</div><div class="kpi-sub neu">FY2020 → FY2025</div></div>
+  </div>
+
+  <div class="charts">
+    <div class="chart-card">
+      <div class="ct">Revenue & Net Income</div>
+      <div class="cs">Click any bar for a full FY snapshot</div>
+      <div class="legend">
+        <span><span class="ld" style="background:#4f8ef7"></span>Revenue ($B)</span>
+        <span><span class="ld" style="background:#2dd4a0"></span>Net Income ($B)</span>
+      </div>
+      <div style="position:relative;height:220px"><canvas id="c1"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="ct">YoY Revenue Growth</div>
+      <div class="cs">FY2023 dip from macro + FX headwinds; recovery accelerating</div>
+      <div style="position:relative;height:260px"><canvas id="c2"></canvas></div>
+    </div>
+    <div class="chart-card full">
+      <div class="ct">Revenue Composition — Stacked by Product</div>
+      <div class="cs">Click any segment for product breakdown · Services share growing steadily from 19.6% → 26.2%</div>
+      <div class="legend">
+        <span><span class="ld" style="background:#4f8ef7"></span>iPhone</span>
+        <span><span class="ld" style="background:#2dd4a0"></span>Services</span>
+        <span><span class="ld" style="background:#b07ef7"></span>Wearables</span>
+        <span><span class="ld" style="background:#f4c542"></span>Mac</span>
+        <span><span class="ld" style="background:#3de8c8"></span>iPad</span>
+      </div>
+      <div style="position:relative;height:220px"><canvas id="c3"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 2: PRODUCT SEGMENTS ══ -->
+<div class="page" id="page-prod">
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-label">Fastest Growing</div><div class="kpi-value">Services</div><div class="kpi-sub up">15.2% CAGR 5yr</div></div>
+    <div class="kpi"><div class="kpi-label">Largest Segment</div><div class="kpi-value">iPhone</div><div class="kpi-sub neu">50.4% of FY25 revenue</div></div>
+    <div class="kpi"><div class="kpi-label">Declining</div><div class="kpi-value">Wearables</div><div class="kpi-sub dn">–13.5% from FY22 peak</div></div>
+    <div class="kpi"><div class="kpi-label">Services GM</div><div class="kpi-value">75%</div><div class="kpi-sub up">vs 37% hardware</div></div>
+    <div class="kpi"><div class="kpi-label">iPhone FY25</div><div class="kpi-value">$209B</div><div class="kpi-sub up">↑ 4.2% YoY</div></div>
+    <div class="kpi"><div class="kpi-label">Mac FY25</div><div class="kpi-value">$33.7B</div><div class="kpi-sub up">Apple Silicon era</div></div>
+  </div>
+  <div class="charts">
+    <div class="chart-card full">
+      <div class="ct">Revenue by Product Line — FY2020 to FY2025</div>
+      <div class="cs">Click any data point to see revenue, share of total, and YoY growth</div>
+      <div class="legend">
+        <span><span class="ld" style="background:#4f8ef7"></span>iPhone</span>
+        <span><span class="ld" style="background:#2dd4a0"></span>Services</span>
+        <span><span class="ld" style="background:#b07ef7"></span>Wearables</span>
+        <span><span class="ld" style="background:#f4c542"></span>Mac</span>
+        <span><span class="ld" style="background:#3de8c8"></span>iPad</span>
+      </div>
+      <div style="position:relative;height:280px"><canvas id="c4"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="ct">FY2025 Revenue Share</div>
+      <div class="cs">Click a slice for revenue and share breakdown</div>
+      <div style="position:relative;height:270px"><canvas id="c5"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="ct">Services Revenue Acceleration</div>
+      <div class="cs">Click a bar — shows gross margin and share of total</div>
+      <div style="position:relative;height:270px"><canvas id="c6"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 3: REGIONAL ══ -->
+<div class="page" id="page-reg">
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-label">Largest Region</div><div class="kpi-value">Americas</div><div class="kpi-sub up">$176B · 42.3% share</div></div>
+    <div class="kpi"><div class="kpi-label">2nd Largest</div><div class="kpi-value">Europe</div><div class="kpi-sub up">$108B · 9.5% CAGR</div></div>
+    <div class="kpi"><div class="kpi-label">Risk Flag ⚠</div><div class="kpi-value">China</div><div class="kpi-sub dn">3yr decline: $74B→$67B</div></div>
+    <div class="kpi"><div class="kpi-label">Fastest Growth</div><div class="kpi-value">Rest APAC</div><div class="kpi-sub up">+48% FY24→FY25</div></div>
+  </div>
+  <div class="charts">
+    <div class="chart-card full">
+      <div class="ct">Revenue by Region — All Years</div>
+      <div class="cs">Click any bar to see full regional breakdown for that year</div>
+      <div class="legend">
+        <span><span class="ld" style="background:#4f8ef7"></span>Americas</span>
+        <span><span class="ld" style="background:#2dd4a0"></span>Europe</span>
+        <span><span class="ld" style="background:#f05d5d"></span>Greater China</span>
+        <span><span class="ld" style="background:#b07ef7"></span>Japan</span>
+        <span><span class="ld" style="background:#f4c542"></span>Rest APAC</span>
+      </div>
+      <div style="position:relative;height:280px"><canvas id="c7"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="ct">Greater China — Risk Spotlight</div>
+      <div class="cs">Revenue peaked FY2022 · 3 consecutive annual declines</div>
+      <div style="position:relative;height:250px"><canvas id="c8"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="ct">FY2025 Regional Share</div>
+      <div class="cs">Americas + Europe = 68.3% of total · Click a slice</div>
+      <div style="position:relative;height:250px"><canvas id="c9"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 4: MARGINS ══ -->
+<div class="page" id="page-margin">
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-label">Gross Margin FY25</div><div class="kpi-value">46.9%</div><div class="kpi-sub up">+8.7pp from FY2020</div></div>
+    <div class="kpi"><div class="kpi-label">Operating Margin</div><div class="kpi-value">32.0%</div><div class="kpi-sub up">Best-in-class hardware</div></div>
+    <div class="kpi"><div class="kpi-label">Net Margin</div><div class="kpi-value">26.9%</div><div class="kpi-sub up">+6pp in 5 years</div></div>
+    <div class="kpi"><div class="kpi-label">Services GM</div><div class="kpi-value">75%</div><div class="kpi-sub up">Near software economics</div></div>
+    <div class="kpi"><div class="kpi-label">Products GM</div><div class="kpi-value">36.8%</div><div class="kpi-sub up">Apple Silicon impact</div></div>
+    <div class="kpi"><div class="kpi-label">GM Gap</div><div class="kpi-value">38pp</div><div class="kpi-sub up">Services vs Products</div></div>
+  </div>
+  <div class="charts">
+    <div class="chart-card full">
+      <div class="ct">Gross, Operating & Net Margin — FY2020 to FY2025</div>
+      <div class="cs">All three expanding — Services mix shift is the primary structural driver · Click any point</div>
+      <div class="legend">
+        <span><span class="ld" style="background:#4f8ef7"></span>Gross margin</span>
+        <span><span class="ld" style="background:#2dd4a0"></span>Operating margin</span>
+        <span><span class="ld" style="background:#f4c542"></span>Net margin</span>
+      </div>
+      <div style="position:relative;height:250px"><canvas id="c10"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="ct">Services vs Products Gross Margin</div>
+      <div class="cs">38pp gap — the key structural story · Click a point</div>
+      <div class="legend">
+        <span><span class="ld" style="background:#2dd4a0"></span>Services GM</span>
+        <span><span class="ld" style="background:#4f8ef7"></span>Products GM</span>
+      </div>
+      <div style="position:relative;height:260px"><canvas id="c11"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="ct">R&D Investment</div>
+      <div class="cs">$31B in FY2025 · AI, silicon, health · Click for % of revenue</div>
+      <div style="position:relative;height:260px"><canvas id="c12"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 5: RAW DATA TABLE ══ -->
+<div class="page" id="page-table">
+  <div class="section-header">Revenue by Product ($B)</div>
+  <div class="chart-card full" style="padding:0;overflow:hidden">
+    <table class="data-table">
+      <thead><tr><th>Metric</th><th>FY2020</th><th>FY2021</th><th>FY2022</th><th>FY2023</th><th>FY2024</th><th>FY2025</th></tr></thead>
+      <tbody>
+        <tr><td>iPhone</td><td>$137.78B</td><td>$191.97B</td><td>$205.49B</td><td>$200.58B</td><td>$201.18B</td><td>$209.59B</td></tr>
+        <tr><td>Mac</td><td>$28.62B</td><td>$35.19B</td><td>$40.18B</td><td>$29.36B</td><td>$29.98B</td><td>$33.71B</td></tr>
+        <tr><td>iPad</td><td>$23.72B</td><td>$31.86B</td><td>$29.29B</td><td>$28.30B</td><td>$26.69B</td><td>$28.02B</td></tr>
+        <tr><td>Wearables, Home & Accessories</td><td>$30.62B</td><td>$38.37B</td><td>$41.24B</td><td>$39.85B</td><td>$37.01B</td><td>$35.69B</td></tr>
+        <tr><td>Services</td><td>$53.77B</td><td>$68.43B</td><td>$78.13B</td><td>$85.20B</td><td>$96.17B</td><td>$109.16B</td></tr>
+        <tr style="font-weight:600"><td>Total Revenue</td><td>$274.52B</td><td>$365.82B</td><td>$394.33B</td><td>$383.29B</td><td>$391.04B</td><td>$416.16B</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-header">Profit & Loss ($B)</div>
+  <div class="chart-card full" style="padding:0;overflow:hidden">
+    <table class="data-table">
+      <thead><tr><th>Metric</th><th>FY2020</th><th>FY2021</th><th>FY2022</th><th>FY2023</th><th>FY2024</th><th>FY2025</th></tr></thead>
+      <tbody>
+        <tr><td>Gross Profit</td><td>$104.96B</td><td>$152.84B</td><td>$170.78B</td><td>$169.15B</td><td>$180.68B</td><td>$195.20B</td></tr>
+        <tr><td>R&D Expense</td><td>$18.75B</td><td>$21.91B</td><td>$26.25B</td><td>$29.92B</td><td>$31.37B</td><td>$31.37B</td></tr>
+        <tr><td>Operating Income</td><td>$66.29B</td><td>$108.95B</td><td>$119.44B</td><td>$114.30B</td><td>$123.22B</td><td>$133.05B</td></tr>
+        <tr><td>Net Income</td><td>$57.41B</td><td>$94.68B</td><td>$99.80B</td><td>$96.99B</td><td>$101.96B</td><td>$111.96B</td></tr>
+        <tr><td>EPS — Diluted</td><td>$3.28</td><td>$5.61</td><td>$6.11</td><td>$6.13</td><td>$6.43</td><td>$7.26</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-header">Margins (%)</div>
+  <div class="chart-card full" style="padding:0;overflow:hidden">
+    <table class="data-table">
+      <thead><tr><th>Margin</th><th>FY2020</th><th>FY2021</th><th>FY2022</th><th>FY2023</th><th>FY2024</th><th>FY2025</th></tr></thead>
+      <tbody>
+        <tr><td>Gross Margin</td><td class="pos">38.2%</td><td class="pos">41.8%</td><td class="pos">43.3%</td><td class="pos">44.1%</td><td class="pos">46.2%</td><td class="pos">46.9%</td></tr>
+        <tr><td>Operating Margin</td><td class="pos">24.2%</td><td class="pos">29.8%</td><td class="pos">30.3%</td><td class="pos">29.8%</td><td class="pos">31.5%</td><td class="pos">32.0%</td></tr>
+        <tr><td>Net Margin</td><td class="pos">20.9%</td><td class="pos">25.9%</td><td class="pos">25.3%</td><td class="pos">25.3%</td><td class="pos">26.1%</td><td class="pos">26.9%</td></tr>
+        <tr><td>Services Gross Margin</td><td class="pos">66.0%</td><td class="pos">69.7%</td><td class="pos">72.4%</td><td class="pos">70.8%</td><td class="pos">73.9%</td><td class="pos">75.0%</td></tr>
+        <tr><td>Products Gross Margin</td><td>31.5%</td><td>35.3%</td><td>36.3%</td><td>36.5%</td><td>37.2%</td><td>36.8%</td></tr>
+        <tr><td>R&D % of Revenue</td><td>6.8%</td><td>6.0%</td><td>6.7%</td><td>7.8%</td><td>8.0%</td><td>7.5%</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-header">Revenue by Region ($B)</div>
+  <div class="chart-card full" style="padding:0;overflow:hidden">
+    <table class="data-table">
+      <thead><tr><th>Region</th><th>FY2020</th><th>FY2021</th><th>FY2022</th><th>FY2023</th><th>FY2024</th><th>FY2025</th></tr></thead>
+      <tbody>
+        <tr><td>Americas</td><td>$124.56B</td><td>$153.31B</td><td>$169.66B</td><td>$162.56B</td><td>$167.00B</td><td>$176.09B</td></tr>
+        <tr><td>Europe</td><td>$68.64B</td><td>$89.31B</td><td>$95.12B</td><td>$94.29B</td><td>$101.33B</td><td>$108.19B</td></tr>
+        <tr><td>Greater China</td><td>$40.31B</td><td>$68.37B</td><td>$74.20B</td><td>$72.56B</td><td>$70.97B</td><td class="neg">$66.95B ↓</td></tr>
+        <tr><td>Japan</td><td>$21.42B</td><td>$28.48B</td><td>$25.98B</td><td>$24.26B</td><td>$25.05B</td><td>$25.31B</td></tr>
+        <tr><td>Rest of Asia Pacific</td><td>$19.59B</td><td>$26.36B</td><td>$29.38B</td><td>$29.62B</td><td>$26.69B</td><td class="pos">$39.62B ↑</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<footer class="footer">
+  All data sourced from Apple Inc. official SEC 10-K Annual Reports FY2020–FY2025 &nbsp;·&nbsp;
+  <a href="https://investor.apple.com/sec-filings/annual-reports" target="_blank">investor.apple.com</a> &nbsp;·&nbsp;
+  <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=AAPL" target="_blank">SEC EDGAR</a> &nbsp;·&nbsp;
+  For informational purposes only · Not financial advice
+</footer>
+
+<script>
+const YR=['FY20','FY21','FY22','FY23','FY24','FY25'];
+const REV=[274.52,365.82,394.33,383.29,391.04,416.16];
+const NI=[57.41,94.68,99.80,96.99,101.96,111.96];
+const IPHONE=[137.78,191.97,205.49,200.58,201.18,209.59];
+const MAC=[28.62,35.19,40.18,29.36,29.98,33.71];
+const IPAD=[23.72,31.86,29.29,28.30,26.69,28.02];
+const WEAR=[30.62,38.37,41.24,39.85,37.01,35.69];
+const SVC=[53.77,68.43,78.13,85.20,96.17,109.16];
+const AM=[124.56,153.31,169.66,162.56,167.00,176.09];
+const EU=[68.64,89.31,95.12,94.29,101.33,108.19];
+const CN=[40.31,68.37,74.20,72.56,70.97,66.95];
+const JP=[21.42,28.48,25.98,24.26,25.05,25.31];
+const APAC=[19.59,26.36,29.38,29.62,26.69,39.62];
+const GM=[38.23,41.78,43.31,44.13,46.21,46.91];
+const OM=[24.15,29.78,30.29,29.82,31.51,31.97];
+const NM=[20.91,25.88,25.31,25.31,26.08,26.92];
+const SGM=[66.0,69.7,72.4,70.8,73.9,75.0];
+const PGM=[31.5,35.3,36.3,36.5,37.2,36.8];
+const RD=[18.75,21.91,26.25,29.92,31.37,31.37];
+
+const tt=document.getElementById('tooltip');
+const ttt=document.getElementById('tt-t');
+const ttb=document.getElementById('tt-b');
+
+function showTT(e,title,rows){
+  ttt.textContent=title;
+  ttb.innerHTML=rows.map(([l,v])=>`<div class="tt-row"><span>${l}</span><span class="tt-val">${v}</span></div>`).join('');
+  tt.style.display='block';
+  positionTT(e);
+}
+function positionTT(e){
+  const x=e.clientX+16,y=e.clientY-10;
+  tt.style.left=Math.min(x,window.innerWidth-210)+'px';
+  tt.style.top=Math.max(10,y)+'px';
+}
+document.addEventListener('mousemove',positionTT);
+document.addEventListener('click',()=>tt.style.display='none');
+
+function pct(v){return v.toFixed(1)+'%';}
+function bil(v){return '$'+v.toFixed(2)+'B';}
+function delta(a,b){const d=(a-b)/b*100;return (d>=0?'+':'')+d.toFixed(1)+'%';}
+
+const GRID={color:'rgba(255,255,255,0.05)'};
+const TICK={color:'#7a7a8e',font:{family:'JetBrains Mono',size:11}};
+const base={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{enabled:false}},
+  onHover:(e,els,ch)=>{ch.canvas.style.cursor=els.length?'pointer':'default';},
+  scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:{...TICK}}}
+};
+
+// C1 Revenue & NI
+new Chart(document.getElementById('c1'),{
+  type:'bar',
+  data:{labels:YR,datasets:[
+    {label:'Revenue',data:REV,backgroundColor:'#4f8ef7'},
+    {label:'Net Income',data:NI,backgroundColor:'#2dd4a0'}
+  ]},
+  options:{...base,scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:{...TICK,callback:v=>'$'+v+'B'}}},
+    onClick(e,els){
+      if(!els.length)return;
+      const i=els[0].index;
+      showTT(e.native,`${YR[i]} Financial Snapshot`,[
+        ['Revenue',bil(REV[i])],['Net Income',bil(NI[i])],
+        ['Net Margin',pct(NI[i]/REV[i]*100)],
+        ['YoY Rev',i>0?delta(REV[i],REV[i-1]):'—'],
+        ['YoY NI',i>0?delta(NI[i],NI[i-1]):'—']
+      ]);
+    }
+  }
+});
+
+// C2 YoY Growth
+const yoyD=YR.slice(1).map((_,i)=>+((REV[i+1]-REV[i])/REV[i]*100).toFixed(1));
+new Chart(document.getElementById('c2'),{
+  type:'bar',
+  data:{labels:YR.slice(1),datasets:[{data:yoyD,backgroundColor:yoyD.map(v=>v>=0?'#2dd4a0':'#f05d5d')}]},
+  options:{...base,scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:{...TICK,callback:v=>v+'%'}}},
+    onClick(e,els){
+      if(!els.length)return;
+      const i=els[0].index;
+      showTT(e.native,`${YR[i+1]} Revenue Growth`,[
+        ['Growth rate',yoyD[i]+'%'],['From',bil(REV[i])],['To',bil(REV[i+1])],
+        ['Δ absolute',(yoyD[i]>=0?'+':'')+((REV[i+1]-REV[i]).toFixed(2))+'B']
+      ]);
+    }
+  }
+});
+
+// C3 Stacked area
+new Chart(document.getElementById('c3'),{
+  type:'bar',
+  data:{labels:YR,datasets:[
+    {label:'iPhone',data:IPHONE,backgroundColor:'#4f8ef7'},
+    {label:'Services',data:SVC,backgroundColor:'#2dd4a0'},
+    {label:'Wearables',data:WEAR,backgroundColor:'#b07ef7'},
+    {label:'Mac',data:MAC,backgroundColor:'#f4c542'},
+    {label:'iPad',data:IPAD,backgroundColor:'#3de8c8'}
+  ]},
+  options:{...base,
+    scales:{x:{grid:GRID,ticks:TICK,stacked:true},y:{grid:GRID,ticks:{...TICK,callback:v=>'$'+v+'B'},stacked:true}},
+    onClick(e,els){
+      if(!els.length)return;
+      const i=els[0].index;
+      showTT(e.native,`${YR[i]} Product Mix`,[
+        ['iPhone',bil(IPHONE[i])+' ('+pct(IPHONE[i]/REV[i]*100)+')'],
+        ['Services',bil(SVC[i])+' ('+pct(SVC[i]/REV[i]*100)+')'],
+        ['Wearables',bil(WEAR[i])],['Mac',bil(MAC[i])],['iPad',bil(IPAD[i])],
+        ['Total',bil(REV[i])]
+      ]);
+    }
+  }
+});
+
+// C4 Product lines
+new Chart(document.getElementById('c4'),{
+  type:'line',
+  data:{labels:YR,datasets:[
+    {label:'iPhone',data:IPHONE,borderColor:'#4f8ef7',backgroundColor:'transparent',tension:0.3,pointRadius:6,pointHoverRadius:9,borderWidth:2},
+    {label:'Services',data:SVC,borderColor:'#2dd4a0',backgroundColor:'transparent',tension:0.3,pointRadius:6,pointHoverRadius:9,borderWidth:2,borderDash:[6,3]},
+    {label:'Wearables',data:WEAR,borderColor:'#b07ef7',backgroundColor:'transparent',tension:0.3,pointRadius:6,pointHoverRadius:9,borderWidth:2,borderDash:[3,3]},
+    {label:'Mac',data:MAC,borderColor:'#f4c542',backgroundColor:'transparent',tension:0.3,pointRadius:6,pointHoverRadius:9,borderWidth:2},
+    {label:'iPad',data:IPAD,borderColor:'#3de8c8',backgroundColor:'transparent',tension:0.3,pointRadius:6,pointHoverRadius:9,borderWidth:2}
+  ]},
+  options:{...base,scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:{...TICK,callback:v=>'$'+v+'B'}}},
+    onClick(e,els){
+      if(!els.length)return;
+      const i=els[0].index,ds=els[0].datasetIndex;
+      const names=['iPhone','Services','Wearables','Mac','iPad'];
+      const datas=[IPHONE,SVC,WEAR,MAC,IPAD];
+      const v=datas[ds][i];
+      showTT(e.native,`${names[ds]} — ${YR[i]}`,[
+        ['Revenue',bil(v)],['% of total',pct(v/REV[i]*100)],
+        ['YoY',i>0?delta(v,datas[ds][i-1]):'—'],
+        ['5yr change',delta(v,datas[ds][0])]
+      ]);
+    }
+  }
+});
+
+// C5 FY25 donut
+new Chart(document.getElementById('c5'),{
+  type:'doughnut',
+  data:{labels:['iPhone','Services','Wearables','Mac','iPad'],
+    datasets:[{data:[209.59,109.16,35.69,33.71,28.02],
+      backgroundColor:['#4f8ef7','#2dd4a0','#b07ef7','#f4c542','#3de8c8'],
+      borderWidth:3,borderColor:'#111118',hoverOffset:6}]},
+  options:{...base,cutout:'60%',
+    scales:{x:{display:false},y:{display:false}},
+    onClick(e,els){
+      if(!els.length)return;
+      const lbs=['iPhone','Services','Wearables','Mac','iPad'];
+      const vs=[209.59,109.16,35.69,33.71,28.02];
+      const i=els[0].index;
+      showTT(e.native,`${lbs[i]} — FY2025`,[
+        ['Revenue',bil(vs[i])],['Share of total',pct(vs[i]/416.16*100)],
+        ['5yr change',delta(vs[i],[137.78,53.77,30.62,28.62,23.72][i])]
+      ]);
+    }
+  }
+});
+
+// C6 Services bars
+new Chart(document.getElementById('c6'),{
+  type:'bar',
+  data:{labels:YR,datasets:[{data:SVC,backgroundColor:'#2dd4a0',borderRadius:4}]},
+  options:{...base,scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:{...TICK,callback:v=>'$'+v+'B'}}},
+    onClick(e,els){
+      if(!els.length)return;
+      const i=els[0].index;
+      showTT(e.native,`Services — ${YR[i]}`,[
+        ['Revenue',bil(SVC[i])],['% of total',pct(SVC[i]/REV[i]*100)],
+        ['Gross margin',pct(SGM[i])],['YoY',i>0?delta(SVC[i],SVC[i-1]):'—']
+      ]);
+    }
+  }
+});
+
+// C7 Regional grouped bars
+new Chart(document.getElementById('c7'),{
+  type:'bar',
+  data:{labels:YR,datasets:[
+    {label:'Americas',data:AM,backgroundColor:'#4f8ef7'},
+    {label:'Europe',data:EU,backgroundColor:'#2dd4a0'},
+    {label:'Greater China',data:CN,backgroundColor:'#f05d5d'},
+    {label:'Japan',data:JP,backgroundColor:'#b07ef7'},
+    {label:'Rest APAC',data:APAC,backgroundColor:'#f4c542'}
+  ]},
+  options:{...base,scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:{...TICK,callback:v=>'$'+v+'B'}}},
+    onClick(e,els){
+      if(!els.length)return;
+      const i=els[0].index;
+      showTT(e.native,`${YR[i]} All Regions`,[
+        ['Americas',bil(AM[i])+' '+pct(AM[i]/REV[i]*100)],
+        ['Europe',bil(EU[i])+' '+pct(EU[i]/REV[i]*100)],
+        ['Greater China',bil(CN[i])+' '+pct(CN[i]/REV[i]*100)],
+        ['Japan',bil(JP[i])],['Rest APAC',bil(APAC[i])],
+        ['Total',bil(REV[i])]
+      ]);
+    }
+  }
+});
+
+// C8 China line
+new Chart(document.getElementById('c8'),{
+  type:'line',
+  data:{labels:YR,datasets:[{data:CN,borderColor:'#f05d5d',backgroundColor:'rgba(240,93,93,0.08)',fill:true,tension:0.35,pointRadius:7,pointHoverRadius:10,borderWidth:2.5}]},
+  options:{...base,scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:{...TICK,callback:v=>'$'+v+'B'},min:30,max:82}},
+    onClick(e,els){
+      if(!els.length)return;
+      const i=els[0].index;
+      showTT(e.native,`Greater China — ${YR[i]}`,[
+        ['Revenue',bil(CN[i])],['Share',pct(CN[i]/REV[i]*100)],
+        ['YoY',i>0?delta(CN[i],CN[i-1]):'—'],
+        ['vs FY22 peak',delta(CN[i],74.20)]
+      ]);
+    }
+  }
+});
+
+// C9 Region donut
+new Chart(document.getElementById('c9'),{
+  type:'doughnut',
+  data:{labels:['Americas','Europe','Greater China','Japan','Rest APAC'],
+    datasets:[{data:[176.09,108.19,66.95,25.31,39.62],
+      backgroundColor:['#4f8ef7','#2dd4a0','#f05d5d','#b07ef7','#f4c542'],
+      borderWidth:3,borderColor:'#111118',hoverOffset:6}]},
+  options:{...base,cutout:'60%',
+    scales:{x:{display:false},y:{display:false}},
+    onClick(e,els){
+      if(!els.length)return;
+      const lbs=['Americas','Europe','Greater China','Japan','Rest APAC'];
+      const vs=[176.09,108.19,66.95,25.31,39.62];
+      const i=els[0].index;
+      showTT(e.native,`${lbs[i]} — FY2025`,[
+        ['Revenue',bil(vs[i])],['Share',pct(vs[i]/416.16*100)],
+        ['YoY',delta(vs[i],[167.00,101.33,70.97,25.05,26.69][i])]
+      ]);
+    }
+  }
+});
+
+// C10 Triple margin
+new Chart(document.getElementById('c10'),{
+  type:'line',
+  data:{labels:YR,datasets:[
+    {label:'Gross',data:GM,borderColor:'#4f8ef7',backgroundColor:'transparent',tension:0.3,pointRadius:6,pointHoverRadius:9,borderWidth:2.5},
+    {label:'Operating',data:OM,borderColor:'#2dd4a0',backgroundColor:'transparent',tension:0.3,pointRadius:6,pointHoverRadius:9,borderWidth:2.5,borderDash:[6,3]},
+    {label:'Net',data:NM,borderColor:'#f4c542',backgroundColor:'transparent',tension:0.3,pointRadius:6,pointHoverRadius:9,borderWidth:2.5,borderDash:[3,3]}
+  ]},
+  options:{...base,scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:{...TICK,callback:v=>v+'%'},min:15,max:55}},
+    onClick(e,els){
+      if(!els.length)return;
+      const i=els[0].index;
+      showTT(e.native,`Margins — ${YR[i]}`,[
+        ['Gross margin',pct(GM[i])],['Operating margin',pct(OM[i])],
+        ['Net margin',pct(NM[i])],['Revenue',bil(REV[i])],['Net Income',bil(NI[i])]
+      ]);
+    }
+  }
+});
+
+// C11 Services vs Products GM
+new Chart(document.getElementById('c11'),{
+  type:'line',
+  data:{labels:YR,datasets:[
+    {label:'Services',data:SGM,borderColor:'#2dd4a0',backgroundColor:'rgba(45,212,160,0.07)',fill:'+1',tension:0.3,pointRadius:6,pointHoverRadius:9,borderWidth:2.5},
+    {label:'Products',data:PGM,borderColor:'#4f8ef7',backgroundColor:'transparent',tension:0.3,pointRadius:6,pointHoverRadius:9,borderWidth:2.5,borderDash:[5,3]}
+  ]},
+  options:{...base,scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:{...TICK,callback:v=>v+'%'},min:25,max:82}},
+    onClick(e,els){
+      if(!els.length)return;
+      const i=els[0].index;
+      showTT(e.native,`GM Breakdown — ${YR[i]}`,[
+        ['Services GM',pct(SGM[i])],['Products GM',pct(PGM[i])],
+        ['Gap',(SGM[i]-PGM[i]).toFixed(1)+'pp'],['Blended GM',pct(GM[i])]
+      ]);
+    }
+  }
+});
+
+// C12 R&D
+new Chart(document.getElementById('c12'),{
+  type:'bar',
+  data:{labels:YR,datasets:[{data:RD,backgroundColor:'#b07ef7',borderRadius:4}]},
+  options:{...base,scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:{...TICK,callback:v=>'$'+v+'B'}}},
+    onClick(e,els){
+      if(!els.length)return;
+      const i=els[0].index;
+      showTT(e.native,`R&D — ${YR[i]}`,[
+        ['R&D Spend',bil(RD[i])],['% of Revenue',pct(RD[i]/REV[i]*100)],
+        ['YoY',i>0?delta(RD[i],RD[i-1]):'—']
+      ]);
+    }
+  }
+});
+
+function show(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
